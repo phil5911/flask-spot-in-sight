@@ -1,55 +1,62 @@
 from flask import Blueprint, jsonify, request
+from src.config.database import db
 from src.model.Task import Task
 
 api_bp = Blueprint("api", __name__)
 
 # Liste de tâches en mémoire
-task_list = []
+# task_list = []
 
 # Récupérer toutes les tâches
 @api_bp.route('/task', methods=['GET'])
 def get_task():
-    return jsonify([task.to_dict() for task in task_list])
+    tasks = Task.query.all()
+    return jsonify([task.to_dict() for task in tasks])
+
+@api_bp.route("/task/<int:task_id>", methods=["GET"])
+def get_task_by_id(task_id : int):
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({'error': 'Tâche non trouvée.'}),404
+    return jsonify(task.to_dict()),200
+
 
 # Créer une nouvelle tâche
-@api_bp.route('/task', methods=['POST'])
+@api_bp.route("/task", methods=["POST"])
 def create_task():
     data = request.get_json()
-    new_task = Task(
-        id=data.get("id"),
-        title=data.get("title"),
-        description=data.get("description")
+    if not data:
+        return jsonify({'error': 'objet vide.'}),400
+    new_task: Task = Task(
+        title=data.get("title"), description=data.get("description")
     )
-    task_list.append(new_task)
+    db.session.add(new_task)
+    db.session.commit()
     return jsonify(new_task.to_dict()), 201
 
-@api_bp.route('/task/<int:task_id>', methods=['DELETE'])
+@api_bp.route("/task/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
-    # 1. Rechercher la task dans le tableau
-    for task in task_list:
-        if task.id == task_id:
-            task_list.remove(task)
-            return jsonify({'message': 'task delete'}), 200
-        return jsonify({'message':'task no found'}), 404
+    # 1. rechercher la task dans la bdd
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({'error': 'Tâche non trouvée.'}),404
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({"message": "task deleted"}), 200
 
-@api_bp.route('/task/<int:task_id>', methods=['PUT'])
+@api_bp.route("/task/<int:task_id>", methods=["PUT"])
 def update_task(task_id):
+    # 1. recuperer la data
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({'error': 'Tâche non trouvée.'}), 404
     data = request.get_json()
-    if not data:
-        return jsonify({"message": "No JSON data provided"}), 400
+    task.title = data.get("title")
+    task.description = data.get("description")
+    task.completed = data.get("completed")
+    db.session.commit()
+    return jsonify(task.to_dict()), 404
 
-    for task in task_list:
-        if task.id == task_id:
-            task.title = data.get('title', task.title)
-            task.description = data.get('description', task.description)
-            # Si completed est envoyé, on l'utilise ; sinon on garde l'ancien
-            if 'completed' in data:
-                task.completed = data['completed']
-
-            return jsonify(task.to_dict()), 200
-
-    # Si aucune tâche trouvée
-    return jsonify({'message': 'task not found'}), 404
 
 
 
