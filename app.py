@@ -15,6 +15,10 @@ def create_app():
     )
     app.config.from_object(Config)
 
+    # Active CORS pour toutes les routes
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+
+
     print("➡️ DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])  # debug
 
     # Initialisez db avec l'application
@@ -32,10 +36,13 @@ def create_app():
     app.register_blueprint(api_bp, url_prefix="/api")
     return app
 
+# ⚠️ rendre l'instance globale pour gunicorn
+app = create_app()
+
 
 if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
+
 
 
 

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, make_response
 from src.config.database import db
 from src.model.Task import Task
 
@@ -6,6 +6,9 @@ api_bp = Blueprint("api", __name__)
 
 # Liste de tâches en mémoire
 # task_list = []
+
+# Route OPTIONS pour le préflight CORS
+
 
 # Récupérer toutes les tâches
 @api_bp.route('/task', methods=['GET'])
@@ -36,6 +39,7 @@ def create_task():
     db.session.commit()
     return jsonify(new_task.to_dict()), 201
 
+
 @api_bp.route("/task/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
     # 1. rechercher la task dans la bdd
@@ -45,6 +49,7 @@ def delete_task(task_id):
     db.session.delete(task)
     db.session.commit()
     return jsonify({"message": "task deleted"}), 200
+
 
 @api_bp.route("/task/<int:task_id>", methods=["PUT"])
 def update_task(task_id):
@@ -58,6 +63,7 @@ def update_task(task_id):
     task.completed = data.get("completed")
     db.session.commit()
     return jsonify(task.to_dict()), 200
+
 
 
 

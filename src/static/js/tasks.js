@@ -4,25 +4,31 @@ document.getElementById('add-task-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const title = document.getElementById('title').value;
     const description = document.getElementById('description').value;
-    const id = 1;
-    fetch('http://127.0.0.1:5000/api/task',{
+
+    fetch('http://localhost:5004/tasks/task', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             title: title,
-            description: description,
+            description: description
         })
     })
-            .then(() => {
-            document.getElementById('title').value = '';
-            document.getElementById('description').value = '';
-            refresh();
-        })
-})
-
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw err });
+        }
+        return response.json();
+    })
+    .then(() => {
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        refresh();
+    })
+    .catch(err => console.error("Erreur ajout tâche:", err));
+});
 
 function refresh(){
-    fetch('/api/task')
+    fetch('http://localhost:5004/tasks/task')
         .then(response => response.json())
             // Récupération de la table HTML
         .then(data => {
@@ -54,28 +60,19 @@ function refresh(){
 }
 
 function deleteTask(taskId) {
-    fetch(`/api/task/${taskId}`, {
+    fetch(`http://localhost:5004/api/task/${taskId}`, {
         method: 'DELETE'
     }).then(() => refresh());
 }
 
 function toggleTask(taskId, title, description, isChecked) {
-    fetch(`/api/task/${taskId}`, {
+    fetch(`http://localhost:5004/tasks/task/${taskId}`, {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify( {
+        body: JSON.stringify({
             title: title,
             description: description,
             completed: isChecked
         })
     }).then(() => refresh());
 }
-
-// chargement initial des tâches
-refresh();
-
-
-
-
-
-
