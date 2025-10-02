@@ -28,7 +28,9 @@ def create_task():
     if not data:
         return jsonify({'error': 'objet vide.'}),400
     new_task: Task = Task(
-        title=data.get("title"), description=data.get("description")
+        title=data.get("title"),
+        description=data.get("description"),
+        completed=data.get("completed", False)
     )
     db.session.add(new_task)
     db.session.commit()
@@ -55,7 +57,7 @@ def update_task(task_id):
     task.description = data.get("description")
     task.completed = data.get("completed")
     db.session.commit()
-    return jsonify(task.to_dict()), 404
+    return jsonify(task.to_dict()), 200
 
 
 
